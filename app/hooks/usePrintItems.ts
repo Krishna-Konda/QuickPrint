@@ -1,6 +1,3 @@
-// FILE: app/hooks/usePrintItems.ts
-// Copy this to: app/hooks/usePrintItems.ts
-
 import { useState, useEffect } from "react";
 import { PrintItem } from "@/app/types";
 import { storageService } from "@/app/lib/storage";
@@ -12,26 +9,27 @@ import {
 
 export const usePrintItems = () => {
   const [items, setItems] = useState<PrintItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Load items from localStorage on mount
+  // Load items from MongoDB on mount
   useEffect(() => {
-    const loadedItems = storageService.loadItems();
-    setItems(loadedItems);
+    loadItems();
   }, []);
 
-  // Save items to localStorage whenever they change
-  useEffect(() => {
-    storageService.saveItems(items);
-  }, [items]);
+  const loadItems = async () => {
+    setLoading(true);
+    const loadedItems = await storageService.loadItems();
+    setItems(loadedItems);
+    setLoading(false);
+  };
 
   const addFile = async (file: File) => {
     try {
       const content = await readFileAsDataURL(file);
       const isImage = file.type.startsWith("image/");
 
-      const newItem: PrintItem = {
-        id: generateUniqueId(),
-        type: isImage ? "image" : "file",
+      const newItemData = {
+        type: (isImage ? "image" : "file") as "file" | "image",
         content,
         fileName: file.name,
         fileSize: file.size,
@@ -39,26 +37,33 @@ export const usePrintItems = () => {
         preview: isImage ? content : undefined,
       };
 
-      setItems((prev) => [newItem, ...prev]);
+      const savedItem = await storageService.saveItem(newItemData);
+
+      if (savedItem) {
+        setItems((prev) => [savedItem, ...prev]);
+      }
     } catch (error) {
       console.error("Failed to add file:", error);
       throw error;
     }
   };
 
-  const addTextOrUrl = (value: string) => {
+  const addTextOrUrl = async (value: string) => {
     if (!value.trim()) return;
 
     const urlCheck = isValidUrl(value);
 
-    const newItem: PrintItem = {
-      id: generateUniqueId(),
-      type: urlCheck ? "url" : "text",
+    const newItemData = {
+      type: (urlCheck ? "url" : "text") as "url" | "text",
       content: value.trim(),
       timestamp: new Date(),
     };
 
-    setItems((prev) => [newItem, ...prev]);
+    const savedItem = await storageService.saveItem(newItemData);
+
+    if (savedItem) {
+      setItems((prev) => [savedItem, ...prev]);
+    }
   };
 
   const addPastedImage = async (blob: Blob) => {
@@ -73,21 +78,28 @@ export const usePrintItems = () => {
     }
   };
 
-  const deleteItem = (id: string) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
+  const deleteItem = async (id: string) => {
+    const success = await storageService.deleteItem(id);
+    if (success) {
+      setItems((prev) => prev.filter((item) => item.id !== id));
+    }
   };
 
-  const clearAll = () => {
-    setItems([]);
-    storageService.clearItems();
+  const clearAll = async () => {
+    const success = await storageService.clearItems();
+    if (success) {
+      setItems([]);
+    }
   };
 
   return {
     items,
+    loading,
     addFile,
     addTextOrUrl,
     addPastedImage,
     deleteItem,
     clearAll,
+    refreshItems: loadItems,
   };
 };
