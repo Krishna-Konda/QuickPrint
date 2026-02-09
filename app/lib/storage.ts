@@ -1,45 +1,83 @@
-// FILE: app/lib/storage.ts
-// Copy this to: app/lib/storage.ts
-
 import { PrintItem } from "@/app/types";
-import { APP_CONFIG } from "@/app/constants/config";
 
 class StorageService {
-  private storageKey = APP_CONFIG.storageKey;
+  private baseUrl = "/api/items";
 
-  saveItems(items: PrintItem[]): void {
+  async saveItem(item: Omit<PrintItem, "id">): Promise<PrintItem | null> {
     try {
-      if (items.length > 0) {
-        localStorage.setItem(this.storageKey, JSON.stringify(items));
-      } else {
-        localStorage.removeItem(this.storageKey);
+      const response = await fetch(this.baseUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(item),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        return {
+          ...result.data,
+          id: result.data._id,
+          timestamp: new Date(result.data.timestamp),
+        };
       }
+
+      return null;
     } catch (error) {
-      console.error("Failed to save items:", error);
+      console.error("Failed to save item:", error);
+      return null;
     }
   }
 
-  loadItems(): PrintItem[] {
+  async loadItems(): Promise<PrintItem[]> {
     try {
-      const stored = localStorage.getItem(this.storageKey);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        return parsed.map((item: any) => ({
+      const response = await fetch(this.baseUrl, {
+        cache: "no-store",
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        return result.data.map((item: any) => ({
           ...item,
+          id: item._id,
           timestamp: new Date(item.timestamp),
         }));
       }
+
+      return [];
     } catch (error) {
       console.error("Failed to load items:", error);
+      return [];
     }
-    return [];
   }
 
-  clearItems(): void {
+  async deleteItem(id: string): Promise<boolean> {
     try {
-      localStorage.removeItem(this.storageKey);
+      const response = await fetch(`${this.baseUrl}/${id}`, {
+        method: "DELETE",
+      });
+
+      const result = await response.json();
+      return result.success;
+    } catch (error) {
+      console.error("Failed to delete item:", error);
+      return false;
+    }
+  }
+
+  async clearItems(): Promise<boolean> {
+    try {
+      const response = await fetch(this.baseUrl, {
+        method: "DELETE",
+      });
+
+      const result = await response.json();
+      return result.success;
     } catch (error) {
       console.error("Failed to clear items:", error);
+      return false;
     }
   }
 }
