@@ -1,6 +1,3 @@
-// FILE: app/page.tsx
-// Copy this to: app/page.tsx
-
 "use client";
 
 import { usePrintItems } from "./hooks/usePrintItems";
@@ -8,10 +5,18 @@ import { useImagePaste } from "./hooks/useImagePaste";
 import { Header } from "./components/header";
 import { UploadSection } from "./components/UploadSection";
 import { PrintQueue } from "./components/PrintQueue";
+import { Loader2 } from "lucide-react";
 
 export default function Home() {
-  const { items, addFile, addTextOrUrl, addPastedImage, deleteItem, clearAll } =
-    usePrintItems();
+  const {
+    items,
+    loading,
+    addFile,
+    addTextOrUrl,
+    addPastedImage,
+    deleteItem,
+    clearAll,
+  } = usePrintItems();
 
   useImagePaste({
     onImagePaste: addPastedImage,
@@ -46,7 +51,16 @@ export default function Home() {
             onTextSubmit={addTextOrUrl}
           />
 
-          <PrintQueue items={items} onDeleteItem={deleteItem} />
+          {loading ? (
+            <div className="bg-gradient-to-br from-zinc-900 to-zinc-800 border-2 border-zinc-800 rounded-3xl p-12 text-center">
+              <div className="flex flex-col items-center gap-4">
+                <Loader2 className="w-12 h-12 text-cyan-400 animate-spin" />
+                <p className="text-zinc-400">Loading your print queue...</p>
+              </div>
+            </div>
+          ) : (
+            <PrintQueue items={items} onDeleteItem={deleteItem} />
+          )}
         </main>
 
         {/* Footer */}
