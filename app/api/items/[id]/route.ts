@@ -5,11 +5,11 @@ import PrintItem from "@/app/models/PrintItem";
 // DELETE - Delete single item by ID
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     await connectDB();
-    const { id } = params;
+    const { id } = await params;
 
     const deletedItem = await PrintItem.findByIdAndDelete(id);
 
