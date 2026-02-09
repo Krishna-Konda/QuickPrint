@@ -1,8 +1,62 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# QuickPrint
 
-## Getting Started
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Next.js](https://img.shields.io/badge/Next.js-latest-black)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
 
-First, run the development server:
+A modern, high-performance Next.js application designed for rapid development and deployment. Built with TypeScript for type safety and enhanced developer experience.
+
+## 📋 Table of Contents
+
+- [Features](#features)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Getting Started](#getting-started)
+- [Project Structure](#project-structure)
+- [Available Scripts](#available-scripts)
+- [Technologies](#technologies)
+- [Deployment](#deployment)
+- [Contributing](#contributing)
+- [License](#license)
+
+## ✨ Features
+
+- ⚡ **Next.js 14+** - Latest React framework with App Router
+- 📘 **TypeScript** - Full type safety and better DX
+- 🎨 **Modern UI** - Ready for custom styling
+- 🚀 **Production Ready** - Optimized for deployment
+- 📱 **Responsive Design** - Mobile-first approach
+- 🔧 **ESLint Configured** - Code quality standards
+
+## 📦 Requirements
+
+- Node.js 18+ or Bun
+- npm, yarn, pnpm, or bun package manager
+
+## 🔧 Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/Krishna-Konda/QuickPrint.git
+cd QuickPrint
+```
+
+2. Install dependencies:
+```bash
+npm install
+# or
+yarn install
+# or
+pnpm install
+# or
+bun install
+```
+
+## 🚀 Getting Started
+
+### Development
+
+Run the development server:
 
 ```bash
 npm run dev
@@ -14,23 +68,100 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The application auto-reloads when you edit files (`app/page.tsx`, etc.).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Production Build
 
-## Learn More
+```bash
+npm run build
+npm start
+```
 
-To learn more about Next.js, take a look at the following resources:
+## 📁 Project Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+QuickPrint/
+├── app/
+│   ├── layout.tsx       # Root layout
+│   ├── page.tsx         # Home page
+│   └── globals.css      # Global styles
+├── public/              # Static assets
+├── package.json         # Dependencies
+├── tsconfig.json        # TypeScript config
+├── next.config.ts       # Next.js config
+└── README.md            # This file
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📜 Available Scripts
 
-## Deploy on Vercel
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Build for production |
+| `npm start` | Start production server |
+| `npm run lint` | Run ESLint |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🛠 Technologies
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Frontend Framework**: [Next.js](https://nextjs.org/) - React framework for production
+- **Language**: [TypeScript](https://www.typescriptlang.org/) - Type-safe JavaScript
+- **Styling**: CSS Modules & Tailwind CSS ready
+- **Font**: [Geist](https://vercel.com/font) - Modern font family
+
+## 🌐 Deployment
+
+The easiest way to deploy your QuickPrint application is using [Vercel](https://vercel.com/):
+
+1. Push your code to GitHub
+2. Connect your repository to Vercel
+3. Vercel automatically detects Next.js and configures the build
+4. Your app is live!
+
+### Other Deployment Options
+
+- [Netlify](https://netlify.com)
+- [AWS Amplify](https://aws.amazon.com/amplify/)
+- [Docker](https://www.docker.com/)
+- [Railway](https://railway.app/)
+
+See [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## 📚 Learning Resources
+
+- [Next.js Documentation](https://nextjs.org/docs) - Learn Next.js features and API
+- [Learn Next.js](https://nextjs.org/learn) - Interactive tutorial
+- [React Documentation](https://react.dev) - React fundamentals
+- [TypeScript Handbook](https://www.typescriptlang.org/docs/) - TypeScript guide
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 👨‍💻 Author
+
+**Krishna Konda**
+- 🌐 Website: [krishna-konda.dev](https://krishna-konda.dev)
+- 📧 Email: [kondakrishna70@gmail.com](mailto:kondakrishna70@gmail.com)
+- 💼 LinkedIn: [Krishna Konda](https://linkedin.com/in/krishna-konda)
+- 🐙 GitHub: [@Krishna-Konda](https://github.com/Krishna-Konda)
+
+## 🙏 Acknowledgments
+
+- Built with [Create Next App](https://nextjs.org/docs/app/api-reference/cli/create-next-app)
+- Inspired by modern development best practices
+
+---
+
+**Made with ❤️ by Krishna Konda**
