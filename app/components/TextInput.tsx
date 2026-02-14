@@ -1,6 +1,3 @@
-// FILE: app/components/TextInput.tsx
-// Copy this to: app/components/TextInput.tsx
-
 import { useState, useRef } from "react";
 import { FileText, Image as ImageIcon } from "lucide-react";
 
