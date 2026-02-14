@@ -1,6 +1,3 @@
-// FILE: app/components/Header.tsx
-// Copy this to: app/components/Header.tsx
-
 import { Printer, Trash2, Zap } from "lucide-react";
 import { APP_CONFIG } from "@/app/constants/config";
 
