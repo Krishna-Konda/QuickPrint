@@ -1,7 +1,3 @@
-// FILE: app/components/PrintQueueItem.tsx
-// UPDATED VERSION - Replace your existing PrintQueueItem.tsx with this
-// Copy this to: app/components/PrintQueueItem.tsx
-
 import {
   FileText,
   Link as LinkIcon,
