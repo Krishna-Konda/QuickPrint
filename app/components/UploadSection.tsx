@@ -1,6 +1,3 @@
-// FILE: app/components/UploadSection.tsx
-// Copy this to: app/components/UploadSection.tsx
-
 import { Upload } from "lucide-react";
 import { FileUpload } from "./FileUpload";
 import { TextInput } from "./TextInput";
