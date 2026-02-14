@@ -1,6 +1,3 @@
-// FILE: app/components/FileUpload.tsx
-// Copy this to: app/components/FileUpload.tsx
-
 import { useRef } from "react";
 import { Upload } from "lucide-react";
 import { ACCEPTED_FILE_TYPES } from "@/app/constants/config";
