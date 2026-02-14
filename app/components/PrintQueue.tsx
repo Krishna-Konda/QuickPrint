@@ -1,6 +1,3 @@
-// FILE: app/components/PrintQueue.tsx
-// Copy this to: app/components/PrintQueue.tsx
-
 import { Clock, Printer } from "lucide-react";
 import { PrintItem } from "@/app/types";
 import { PrintQueueItem } from "./PrintQueueItem";
