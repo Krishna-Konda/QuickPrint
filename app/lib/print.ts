@@ -1,112 +1,118 @@
 // FILE: app/lib/print.ts
-// ABSOLUTE FINAL WORKING VERSION
+// SIMPLEST SOLUTION - Native Print Dialog Only
 // Copy this to: app/lib/print.ts
 
 import { PrintItem } from "@/app/types";
 
 class PrintService {
   printPDF(item: PrintItem): void {
-    // Create hidden iframe
+    // Create completely hidden iframe
     const iframe = document.createElement("iframe");
-    iframe.style.position = "absolute";
-    iframe.style.width = "0px";
-    iframe.style.height = "0px";
-    iframe.style.border = "none";
-    iframe.style.visibility = "hidden";
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "0";
+    iframe.src = item.content;
 
     document.body.appendChild(iframe);
 
-    // Set PDF source
-    iframe.src = item.content;
+    iframe.onload = () => {
+      setTimeout(() => {
+        iframe.contentWindow?.print();
 
-    // Wait for load and print
-    iframe.onload = function () {
-      setTimeout(function () {
-        try {
-          if (iframe.contentWindow) {
-            iframe.contentWindow.focus();
-            iframe.contentWindow.print();
-          }
-
-          // Remove after print dialog is shown
-          setTimeout(function () {
-            if (iframe.parentNode) {
-              document.body.removeChild(iframe);
-            }
-          }, 1000);
-        } catch (e) {
-          console.error("Print failed:", e);
-          if (iframe.parentNode) {
-            document.body.removeChild(iframe);
-          }
-          // Fallback: open in new window
-          window.open(item.content, "_blank");
-        }
-      }, 1000);
-    };
-
-    iframe.onerror = function () {
-      if (iframe.parentNode) {
-        document.body.removeChild(iframe);
-      }
-      window.open(item.content, "_blank");
+        // Clean up after 2 seconds
+        setTimeout(() => {
+          document.body.removeChild(iframe);
+        }, 2000);
+      }, 500);
     };
   }
 
   printImage(item: PrintItem): void {
-    const img = new Image();
+    // Create hidden image element
+    const img = document.createElement("img");
     img.src = item.content;
+    img.style.display = "none";
 
-    img.onload = function () {
-      const printWindow = window.open("", "", "height=600,width=800");
+    document.body.appendChild(img);
 
-      if (printWindow) {
-        printWindow.document.write("<html><head><title>Print</title>");
-        printWindow.document.write("<style>");
-        printWindow.document.write(
-          "body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }",
-        );
-        printWindow.document.write("img { max-width: 100%; height: auto; }");
-        printWindow.document.write(
-          "@media print { body { margin: 0; } img { max-width: 100%; page-break-inside: avoid; } }",
-        );
-        printWindow.document.write("</style>");
-        printWindow.document.write("</head><body>");
-        printWindow.document.write('<img src="' + item.content + '" />');
-        printWindow.document.write("</body></html>");
-        printWindow.document.close();
+    img.onload = () => {
+      // Use iframe for image printing
+      const iframe = document.createElement("iframe");
+      iframe.style.position = "fixed";
+      iframe.style.right = "0";
+      iframe.style.bottom = "0";
+      iframe.style.width = "0";
+      iframe.style.height = "0";
+      iframe.style.border = "0";
 
-        setTimeout(function () {
-          printWindow.focus();
-          printWindow.print();
+      document.body.appendChild(iframe);
+
+      const doc = iframe.contentWindow?.document;
+      if (doc) {
+        doc.open();
+        doc.write(`
+          <html>
+            <head>
+              <style>
+                @page { margin: 0; }
+                body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+                img { max-width: 100%; height: auto; }
+              </style>
+            </head>
+            <body><img src="${item.content}" /></body>
+          </html>
+        `);
+        doc.close();
+
+        setTimeout(() => {
+          iframe.contentWindow?.print();
+
+          setTimeout(() => {
+            document.body.removeChild(iframe);
+            document.body.removeChild(img);
+          }, 2000);
         }, 500);
       }
     };
   }
 
   printText(item: PrintItem): void {
-    const printWindow = window.open("", "", "height=600,width=800");
+    // Create iframe for text printing
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "0";
 
-    if (printWindow) {
-      printWindow.document.write("<html><head><title>Print</title>");
-      printWindow.document.write("<style>");
-      printWindow.document.write(
-        "body { font-family: Arial, sans-serif; padding: 40px; line-height: 1.6; }",
-      );
-      printWindow.document.write(
-        "pre { white-space: pre-wrap; word-wrap: break-word; font-family: inherit; }",
-      );
-      printWindow.document.write("</style>");
-      printWindow.document.write("</head><body>");
-      printWindow.document.write(
-        "<pre>" + this.escapeHtml(item.content) + "</pre>",
-      );
-      printWindow.document.write("</body></html>");
-      printWindow.document.close();
+    document.body.appendChild(iframe);
 
-      setTimeout(function () {
-        printWindow.focus();
-        printWindow.print();
+    const doc = iframe.contentWindow?.document;
+    if (doc) {
+      doc.open();
+      doc.write(`
+        <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; }
+              pre { white-space: pre-wrap; word-wrap: break-word; font-family: inherit; }
+            </style>
+          </head>
+          <body><pre>${this.escapeHtml(item.content)}</pre></body>
+        </html>
+      `);
+      doc.close();
+
+      setTimeout(() => {
+        iframe.contentWindow?.print();
+
+        setTimeout(() => {
+          document.body.removeChild(iframe);
+        }, 2000);
       }, 250);
     }
   }
