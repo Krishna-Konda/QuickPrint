@@ -1,119 +1,109 @@
 // FILE: app/lib/print.ts
-// SIMPLEST SOLUTION - Native Print Dialog Only
+// CLEAN VERSION - No document.write issues
 // Copy this to: app/lib/print.ts
 
 import { PrintItem } from "@/app/types";
 
 class PrintService {
   printPDF(item: PrintItem): void {
-    // Create completely hidden iframe
-    const iframe = document.createElement("iframe");
-    iframe.style.position = "fixed";
-    iframe.style.right = "0";
-    iframe.style.bottom = "0";
-    iframe.style.width = "0";
-    iframe.style.height = "0";
-    iframe.style.border = "0";
-    iframe.src = item.content;
+    const printFrame = document.createElement("iframe");
+    printFrame.style.cssText =
+      "position:absolute;width:0;height:0;border:none;";
 
-    document.body.appendChild(iframe);
+    document.body.appendChild(printFrame);
 
-    iframe.onload = () => {
+    printFrame.onload = function () {
+      try {
+        if (printFrame.contentWindow) {
+          printFrame.contentWindow.focus();
+          printFrame.contentWindow.print();
+        }
+      } catch (e) {
+        console.error("Print error:", e);
+      }
+
       setTimeout(() => {
-        iframe.contentWindow?.print();
-
-        // Clean up after 2 seconds
-        setTimeout(() => {
-          document.body.removeChild(iframe);
-        }, 2000);
-      }, 500);
+        if (document.body.contains(printFrame)) {
+          document.body.removeChild(printFrame);
+        }
+      }, 1000);
     };
+
+    printFrame.src = item.content;
   }
 
   printImage(item: PrintItem): void {
-    // Create hidden image element
-    const img = document.createElement("img");
-    img.src = item.content;
-    img.style.display = "none";
+    const printFrame = document.createElement("iframe");
+    printFrame.style.cssText =
+      "position:absolute;width:0;height:0;border:none;";
+    document.body.appendChild(printFrame);
 
-    document.body.appendChild(img);
-
-    img.onload = () => {
-      // Use iframe for image printing
-      const iframe = document.createElement("iframe");
-      iframe.style.position = "fixed";
-      iframe.style.right = "0";
-      iframe.style.bottom = "0";
-      iframe.style.width = "0";
-      iframe.style.height = "0";
-      iframe.style.border = "0";
-
-      document.body.appendChild(iframe);
-
-      const doc = iframe.contentWindow?.document;
-      if (doc) {
-        doc.open();
-        doc.write(`
-          <html>
-            <head>
-              <style>
-                @page { margin: 0; }
-                body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-                img { max-width: 100%; height: auto; }
-              </style>
-            </head>
-            <body><img src="${item.content}" /></body>
-          </html>
-        `);
-        doc.close();
-
-        setTimeout(() => {
-          iframe.contentWindow?.print();
-
-          setTimeout(() => {
-            document.body.removeChild(iframe);
-            document.body.removeChild(img);
-          }, 2000);
-        }, 500);
-      }
-    };
-  }
-
-  printText(item: PrintItem): void {
-    // Create iframe for text printing
-    const iframe = document.createElement("iframe");
-    iframe.style.position = "fixed";
-    iframe.style.right = "0";
-    iframe.style.bottom = "0";
-    iframe.style.width = "0";
-    iframe.style.height = "0";
-    iframe.style.border = "0";
-
-    document.body.appendChild(iframe);
-
-    const doc = iframe.contentWindow?.document;
-    if (doc) {
+    const win = printFrame.contentWindow;
+    if (win && win.document) {
+      const doc = win.document;
       doc.open();
-      doc.write(`
+
+      const htmlContent = `
         <html>
           <head>
-            <style>
-              body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; }
-              pre { white-space: pre-wrap; word-wrap: break-word; font-family: inherit; }
-            </style>
+            <title>Print</title>
           </head>
-          <body><pre>${this.escapeHtml(item.content)}</pre></body>
+          <body>
+            <img src="${item.content}" style="width:100%;" onload="window.print();">
+          </body>
         </html>
-      `);
+      `;
+
+      doc.write(htmlContent);
       doc.close();
 
       setTimeout(() => {
-        iframe.contentWindow?.print();
+        if (document.body.contains(printFrame)) {
+          document.body.removeChild(printFrame);
+        }
+      }, 2000);
+    }
+  }
 
+  printText(item: PrintItem): void {
+    const printFrame = document.createElement("iframe");
+    printFrame.style.cssText =
+      "position:absolute;width:0;height:0;border:none;";
+    document.body.appendChild(printFrame);
+
+    const win = printFrame.contentWindow;
+    if (win && win.document) {
+      const doc = win.document;
+      doc.open();
+
+      const htmlContent = `
+        <html>
+          <head>
+            <title>Print</title>
+            <style>
+              body { font-family: Arial; padding: 20px; line-height: 1.6; }
+              pre { white-space: pre-wrap; }
+            </style>
+          </head>
+          <body>
+            <pre>${this.escapeHtml(item.content)}</pre>
+          </body>
+        </html>
+      `;
+
+      doc.write(htmlContent);
+      doc.close();
+
+      setTimeout(() => {
+        if (win) {
+          win.print();
+        }
         setTimeout(() => {
-          document.body.removeChild(iframe);
-        }, 2000);
-      }, 250);
+          if (document.body.contains(printFrame)) {
+            document.body.removeChild(printFrame);
+          }
+        }, 1000);
+      }, 100);
     }
   }
 
@@ -122,9 +112,12 @@ class PrintService {
   }
 
   private escapeHtml(text: string): string {
-    const div = document.createElement("div");
-    div.textContent = text;
-    return div.innerHTML;
+    return text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
   }
 
   downloadFile(item: PrintItem): void {
