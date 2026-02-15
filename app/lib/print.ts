@@ -2,112 +2,148 @@ import { PrintItem } from "@/app/types";
 
 class PrintService {
   printPDF(item: PrintItem): void {
-    // Simply open the PDF in a new tab - let browser handle it
-    window.open(item.content, "_blank");
+    // Download the PDF blob first, then print it
+    fetch(item.content)
+      .then((response) => response.blob())
+      .then((blob) => {
+        const blobUrl = URL.createObjectURL(blob);
+
+        // Create iframe for printing
+        const iframe = document.createElement("iframe");
+        iframe.style.display = "none";
+        iframe.src = blobUrl;
+
+        document.body.appendChild(iframe);
+
+        iframe.onload = () => {
+          setTimeout(() => {
+            try {
+              iframe.contentWindow?.focus();
+              iframe.contentWindow?.print();
+
+              // Cleanup
+              setTimeout(() => {
+                document.body.removeChild(iframe);
+                URL.revokeObjectURL(blobUrl);
+              }, 100);
+            } catch (error) {
+              console.error("Print error:", error);
+              document.body.removeChild(iframe);
+              URL.revokeObjectURL(blobUrl);
+              alert(
+                "Unable to print. Please try downloading the file instead.",
+              );
+            }
+          }, 500);
+        };
+      })
+      .catch((error) => {
+        console.error("Error loading PDF:", error);
+        alert(
+          "Unable to load PDF for printing. Please try downloading instead.",
+        );
+      });
   }
 
   printImage(item: PrintItem): void {
-    // For images, create a data URL and open it
-    // This allows browser to display and print the image properly
-    const printWindow = window.open("about:blank", "_blank");
+    // Create a temporary div for printing
+    const printDiv = document.createElement("div");
+    printDiv.innerHTML = `
+      <img src="${item.content}" style="max-width: 100%; height: auto;" />
+    `;
 
-    if (printWindow) {
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>Print Image</title>
-            <style>
-              * { margin: 0; padding: 0; box-sizing: border-box; }
-              body { 
-                margin: 0; 
-                display: flex; 
-                justify-content: center; 
-                align-items: center; 
-                min-height: 100vh;
-                background: #f5f5f5;
-              }
-              img { 
-                max-width: 100%; 
-                max-height: 100vh;
-                height: auto;
-                display: block;
-              }
-              @media print {
-                body { 
-                  margin: 0; 
-                  background: white;
-                }
-                img { 
-                  max-width: 100%;
-                  page-break-inside: avoid;
-                }
-              }
-            </style>
-          </head>
-          <body>
-            <img src="${item.content}" alt="${item.fileName || "Image"}" />
-            <script>
-              window.onload = function() {
-                // Wait a bit for image to load, then trigger print
-                setTimeout(function() {
-                  window.print();
-                }, 500);
-              };
-            </script>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
+    // Hide it from view
+    printDiv.style.position = "fixed";
+    printDiv.style.left = "-9999px";
+    document.body.appendChild(printDiv);
+
+    // Create print-specific styles
+    const style = document.createElement("style");
+    style.textContent = `
+      @media print {
+        body * { display: none !important; }
+        #print-content, #print-content * { display: block !important; }
+        #print-content { 
+          position: absolute; 
+          left: 0; 
+          top: 0;
+          width: 100%;
+        }
+        #print-content img {
+          max-width: 100%;
+          height: auto;
+          page-break-inside: avoid;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+    printDiv.id = "print-content";
+
+    // Wait for image to load
+    const img = printDiv.querySelector("img");
+    if (img) {
+      img.onload = () => {
+        window.print();
+
+        // Cleanup
+        setTimeout(() => {
+          document.body.removeChild(printDiv);
+          document.head.removeChild(style);
+        }, 100);
+      };
+
+      // If already loaded
+      if (img.complete) {
+        window.print();
+        setTimeout(() => {
+          document.body.removeChild(printDiv);
+          document.head.removeChild(style);
+        }, 100);
+      }
     }
   }
 
   printText(item: PrintItem): void {
-    // For text, create a formatted print page
-    const printWindow = window.open("about:blank", "_blank");
+    // Create a temporary div for printing
+    const printDiv = document.createElement("div");
+    printDiv.innerHTML = `
+      <div style="font-family: Arial, sans-serif; padding: 20px; line-height: 1.6;">
+        <pre style="white-space: pre-wrap; word-wrap: break-word; font-family: inherit;">${this.escapeHtml(item.content)}</pre>
+      </div>
+    `;
 
-    if (printWindow) {
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>Print Text</title>
-            <style>
-              * { margin: 0; padding: 0; box-sizing: border-box; }
-              body { 
-                font-family: Arial, sans-serif; 
-                padding: 40px; 
-                line-height: 1.6;
-                max-width: 800px;
-                margin: 0 auto;
-                background: white;
-                color: black;
-              }
-              pre { 
-                white-space: pre-wrap; 
-                word-wrap: break-word;
-                font-family: inherit;
-                font-size: 14px;
-              }
-              @media print {
-                body { padding: 20px; }
-              }
-            </style>
-          </head>
-          <body>
-            <pre>${this.escapeHtml(item.content)}</pre>
-            <script>
-              window.onload = function() {
-                setTimeout(function() {
-                  window.print();
-                }, 300);
-              };
-            </script>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-    }
+    // Hide it from view
+    printDiv.style.position = "fixed";
+    printDiv.style.left = "-9999px";
+    document.body.appendChild(printDiv);
+
+    // Create print-specific styles
+    const style = document.createElement("style");
+    style.textContent = `
+      @media print {
+        body * { display: none !important; }
+        #print-content, #print-content * { display: block !important; }
+        #print-content { 
+          position: absolute; 
+          left: 0; 
+          top: 0;
+          width: 100%;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+    printDiv.id = "print-content";
+
+    // Print
+    setTimeout(() => {
+      window.print();
+
+      // Cleanup
+      setTimeout(() => {
+        document.body.removeChild(printDiv);
+        document.head.removeChild(style);
+      }, 100);
+    }, 100);
   }
 
   openURL(url: string): void {
