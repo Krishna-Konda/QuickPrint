@@ -1,28 +1,45 @@
-// FILE: app/lib/print.ts
-// Copy this to: app/lib/print.ts
-
 import { PrintItem } from "@/app/types";
 
 class PrintService {
   printPDF(item: PrintItem): void {
-    const printContent = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Print: ${item.fileName}</title>
-          <style>
-            * { margin: 0; padding: 0; }
-            body { width: 100%; height: 100vh; }
-            iframe { width: 100%; height: 100%; border: none; }
-          </style>
-        </head>
-        <body>
-          <iframe src="${item.content}" onload="window.print(); setTimeout(() => window.close(), 100);"></iframe>
-        </body>
-      </html>
-    `;
+    // Create a hidden iframe for printing
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "fixed";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "none";
+    iframe.src = item.content;
 
-    this.openPrintWindow(printContent);
+    document.body.appendChild(iframe);
+
+    // Wait for PDF to load, then print
+    iframe.onload = () => {
+      setTimeout(() => {
+        try {
+          // Trigger print dialog
+          iframe.contentWindow?.focus();
+          iframe.contentWindow?.print();
+
+          // Remove iframe after a delay
+          setTimeout(() => {
+            document.body.removeChild(iframe);
+          }, 1000);
+        } catch (error) {
+          console.error("Print failed:", error);
+          document.body.removeChild(iframe);
+
+          // Fallback: open in new tab
+          window.open(item.content, "_blank");
+        }
+      }, 500);
+    };
+
+    // Error handling
+    iframe.onerror = () => {
+      console.error("Failed to load PDF");
+      document.body.removeChild(iframe);
+      window.open(item.content, "_blank");
+    };
   }
 
   printImage(item: PrintItem): void {
@@ -30,7 +47,7 @@ class PrintService {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Print: ${item.fileName}</title>
+          <title>Print</title>
           <style>
             * { margin: 0; padding: 0; }
             body { 
@@ -48,12 +65,16 @@ class PrintService {
             }
             @media print {
               body { margin: 0; }
-              img { page-break-inside: avoid; }
+              img { 
+                page-break-inside: avoid;
+                max-width: 100%;
+                height: auto;
+              }
             }
           </style>
         </head>
         <body>
-          <img src="${item.content}" onload="window.print(); setTimeout(() => window.close(), 100);" />
+          <img src="${item.content}" onload="window.print();" />
         </body>
       </html>
     `;
@@ -81,6 +102,9 @@ class PrintService {
               word-wrap: break-word; 
               font-family: inherit;
             }
+            @media print {
+              body { padding: 20px; }
+            }
           </style>
         </head>
         <body>
@@ -88,7 +112,6 @@ class PrintService {
           <script>
             window.onload = function() {
               window.print();
-              setTimeout(() => window.close(), 100);
             };
           </script>
         </body>
