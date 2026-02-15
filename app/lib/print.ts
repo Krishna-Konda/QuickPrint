@@ -1,149 +1,114 @@
+// FILE: app/lib/print.ts
+// ABSOLUTE FINAL WORKING VERSION
+// Copy this to: app/lib/print.ts
+
 import { PrintItem } from "@/app/types";
 
 class PrintService {
   printPDF(item: PrintItem): void {
-    // Download the PDF blob first, then print it
-    fetch(item.content)
-      .then((response) => response.blob())
-      .then((blob) => {
-        const blobUrl = URL.createObjectURL(blob);
+    // Create hidden iframe
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "absolute";
+    iframe.style.width = "0px";
+    iframe.style.height = "0px";
+    iframe.style.border = "none";
+    iframe.style.visibility = "hidden";
 
-        // Create iframe for printing
-        const iframe = document.createElement("iframe");
-        iframe.style.display = "none";
-        iframe.src = blobUrl;
+    document.body.appendChild(iframe);
 
-        document.body.appendChild(iframe);
+    // Set PDF source
+    iframe.src = item.content;
 
-        iframe.onload = () => {
-          setTimeout(() => {
-            try {
-              iframe.contentWindow?.focus();
-              iframe.contentWindow?.print();
+    // Wait for load and print
+    iframe.onload = function () {
+      setTimeout(function () {
+        try {
+          if (iframe.contentWindow) {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+          }
 
-              // Cleanup
-              setTimeout(() => {
-                document.body.removeChild(iframe);
-                URL.revokeObjectURL(blobUrl);
-              }, 100);
-            } catch (error) {
-              console.error("Print error:", error);
+          // Remove after print dialog is shown
+          setTimeout(function () {
+            if (iframe.parentNode) {
               document.body.removeChild(iframe);
-              URL.revokeObjectURL(blobUrl);
-              alert(
-                "Unable to print. Please try downloading the file instead.",
-              );
             }
-          }, 500);
-        };
-      })
-      .catch((error) => {
-        console.error("Error loading PDF:", error);
-        alert(
-          "Unable to load PDF for printing. Please try downloading instead.",
-        );
-      });
+          }, 1000);
+        } catch (e) {
+          console.error("Print failed:", e);
+          if (iframe.parentNode) {
+            document.body.removeChild(iframe);
+          }
+          // Fallback: open in new window
+          window.open(item.content, "_blank");
+        }
+      }, 1000);
+    };
+
+    iframe.onerror = function () {
+      if (iframe.parentNode) {
+        document.body.removeChild(iframe);
+      }
+      window.open(item.content, "_blank");
+    };
   }
 
   printImage(item: PrintItem): void {
-    // Create a temporary div for printing
-    const printDiv = document.createElement("div");
-    printDiv.innerHTML = `
-      <img src="${item.content}" style="max-width: 100%; height: auto;" />
-    `;
+    const img = new Image();
+    img.src = item.content;
 
-    // Hide it from view
-    printDiv.style.position = "fixed";
-    printDiv.style.left = "-9999px";
-    document.body.appendChild(printDiv);
+    img.onload = function () {
+      const printWindow = window.open("", "", "height=600,width=800");
 
-    // Create print-specific styles
-    const style = document.createElement("style");
-    style.textContent = `
-      @media print {
-        body * { display: none !important; }
-        #print-content, #print-content * { display: block !important; }
-        #print-content { 
-          position: absolute; 
-          left: 0; 
-          top: 0;
-          width: 100%;
-        }
-        #print-content img {
-          max-width: 100%;
-          height: auto;
-          page-break-inside: avoid;
-        }
+      if (printWindow) {
+        printWindow.document.write("<html><head><title>Print</title>");
+        printWindow.document.write("<style>");
+        printWindow.document.write(
+          "body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }",
+        );
+        printWindow.document.write("img { max-width: 100%; height: auto; }");
+        printWindow.document.write(
+          "@media print { body { margin: 0; } img { max-width: 100%; page-break-inside: avoid; } }",
+        );
+        printWindow.document.write("</style>");
+        printWindow.document.write("</head><body>");
+        printWindow.document.write('<img src="' + item.content + '" />');
+        printWindow.document.write("</body></html>");
+        printWindow.document.close();
+
+        setTimeout(function () {
+          printWindow.focus();
+          printWindow.print();
+        }, 500);
       }
-    `;
-    document.head.appendChild(style);
-    printDiv.id = "print-content";
-
-    // Wait for image to load
-    const img = printDiv.querySelector("img");
-    if (img) {
-      img.onload = () => {
-        window.print();
-
-        // Cleanup
-        setTimeout(() => {
-          document.body.removeChild(printDiv);
-          document.head.removeChild(style);
-        }, 100);
-      };
-
-      // If already loaded
-      if (img.complete) {
-        window.print();
-        setTimeout(() => {
-          document.body.removeChild(printDiv);
-          document.head.removeChild(style);
-        }, 100);
-      }
-    }
+    };
   }
 
   printText(item: PrintItem): void {
-    // Create a temporary div for printing
-    const printDiv = document.createElement("div");
-    printDiv.innerHTML = `
-      <div style="font-family: Arial, sans-serif; padding: 20px; line-height: 1.6;">
-        <pre style="white-space: pre-wrap; word-wrap: break-word; font-family: inherit;">${this.escapeHtml(item.content)}</pre>
-      </div>
-    `;
+    const printWindow = window.open("", "", "height=600,width=800");
 
-    // Hide it from view
-    printDiv.style.position = "fixed";
-    printDiv.style.left = "-9999px";
-    document.body.appendChild(printDiv);
+    if (printWindow) {
+      printWindow.document.write("<html><head><title>Print</title>");
+      printWindow.document.write("<style>");
+      printWindow.document.write(
+        "body { font-family: Arial, sans-serif; padding: 40px; line-height: 1.6; }",
+      );
+      printWindow.document.write(
+        "pre { white-space: pre-wrap; word-wrap: break-word; font-family: inherit; }",
+      );
+      printWindow.document.write("</style>");
+      printWindow.document.write("</head><body>");
+      printWindow.document.write(
+        "<pre>" + this.escapeHtml(item.content) + "</pre>",
+      );
+      printWindow.document.write("</body></html>");
+      printWindow.document.close();
 
-    // Create print-specific styles
-    const style = document.createElement("style");
-    style.textContent = `
-      @media print {
-        body * { display: none !important; }
-        #print-content, #print-content * { display: block !important; }
-        #print-content { 
-          position: absolute; 
-          left: 0; 
-          top: 0;
-          width: 100%;
-        }
-      }
-    `;
-    document.head.appendChild(style);
-    printDiv.id = "print-content";
-
-    // Print
-    setTimeout(() => {
-      window.print();
-
-      // Cleanup
-      setTimeout(() => {
-        document.body.removeChild(printDiv);
-        document.head.removeChild(style);
-      }, 100);
-    }, 100);
+      setTimeout(function () {
+        printWindow.focus();
+        printWindow.print();
+      }, 250);
+    }
   }
 
   openURL(url: string): void {
