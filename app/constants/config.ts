@@ -1,6 +1,3 @@
-// FILE: app/constants/config.ts
-// Copy this to: app/constants/config.ts
-
 export const APP_CONFIG = {
   name: "QuickPrint",
   tagline: "Print smarter, not harder",
