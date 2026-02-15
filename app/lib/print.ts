@@ -2,135 +2,106 @@ import { PrintItem } from "@/app/types";
 
 class PrintService {
   printPDF(item: PrintItem): void {
-    // Create a hidden iframe for printing
-    const iframe = document.createElement("iframe");
-    iframe.style.position = "fixed";
-    iframe.style.width = "0";
-    iframe.style.height = "0";
-    iframe.style.border = "none";
-    iframe.src = item.content;
+    // Simply open the PDF in a new tab
+    // User can then use Ctrl+P or browser's print button
+    const newWindow = window.open(item.content, "_blank");
 
-    document.body.appendChild(iframe);
-
-    // Wait for PDF to load, then print
-    iframe.onload = () => {
-      setTimeout(() => {
-        try {
-          // Trigger print dialog
-          iframe.contentWindow?.focus();
-          iframe.contentWindow?.print();
-
-          // Remove iframe after a delay
-          setTimeout(() => {
-            document.body.removeChild(iframe);
-          }, 1000);
-        } catch (error) {
-          console.error("Print failed:", error);
-          document.body.removeChild(iframe);
-
-          // Fallback: open in new tab
-          window.open(item.content, "_blank");
-        }
-      }, 500);
-    };
-
-    // Error handling
-    iframe.onerror = () => {
-      console.error("Failed to load PDF");
-      document.body.removeChild(iframe);
-      window.open(item.content, "_blank");
-    };
+    if (newWindow) {
+      // Optional: Try to trigger print dialog after PDF loads
+      newWindow.onload = () => {
+        setTimeout(() => {
+          try {
+            newWindow.print();
+          } catch (e) {
+            // Silent fail - user can still manually print
+            console.log("Auto-print not available, user can use Ctrl+P");
+          }
+        }, 1000);
+      };
+    }
   }
 
   printImage(item: PrintItem): void {
-    const printContent = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Print</title>
-          <style>
-            * { margin: 0; padding: 0; }
-            body { 
-              display: flex; 
-              justify-content: center; 
-              align-items: center; 
-              min-height: 100vh;
-              background: #fff;
-            }
-            img { 
-              max-width: 100%; 
-              max-height: 100vh;
-              height: auto; 
-              display: block;
-            }
-            @media print {
-              body { margin: 0; }
-              img { 
-                page-break-inside: avoid;
-                max-width: 100%;
-                height: auto;
-              }
-            }
-          </style>
-        </head>
-        <body>
-          <img src="${item.content}" onload="window.print();" />
-        </body>
-      </html>
-    `;
+    // Create a simple print window for images
+    const printWindow = window.open("", "_blank");
 
-    this.openPrintWindow(printContent);
+    if (printWindow) {
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Print Image</title>
+            <style>
+              body { 
+                margin: 0; 
+                display: flex; 
+                justify-content: center; 
+                align-items: center; 
+                min-height: 100vh;
+              }
+              img { 
+                max-width: 100%; 
+                height: auto; 
+              }
+              @media print {
+                body { margin: 0; }
+                img { 
+                  max-width: 100%;
+                  page-break-inside: avoid;
+                }
+              }
+            </style>
+          </head>
+          <body>
+            <img src="${item.content}" onload="setTimeout(() => window.print(), 500);" />
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+    }
   }
 
   printText(item: PrintItem): void {
-    const printContent = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Print Text</title>
-          <style>
-            * { margin: 0; padding: 0; }
-            body { 
-              font-family: 'Arial', sans-serif; 
-              padding: 40px; 
-              line-height: 1.6; 
-              background: #fff;
-              color: #000;
-            }
-            pre { 
-              white-space: pre-wrap; 
-              word-wrap: break-word; 
-              font-family: inherit;
-            }
-            @media print {
-              body { padding: 20px; }
-            }
-          </style>
-        </head>
-        <body>
-          <pre>${this.escapeHtml(item.content)}</pre>
-          <script>
-            window.onload = function() {
-              window.print();
-            };
-          </script>
-        </body>
-      </html>
-    `;
+    // Create a simple print window for text
+    const printWindow = window.open("", "_blank");
 
-    this.openPrintWindow(printContent);
+    if (printWindow) {
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Print Text</title>
+            <style>
+              body { 
+                font-family: Arial, sans-serif; 
+                padding: 40px; 
+                line-height: 1.6;
+                max-width: 800px;
+                margin: 0 auto;
+              }
+              pre { 
+                white-space: pre-wrap; 
+                word-wrap: break-word;
+                font-family: inherit;
+              }
+            </style>
+          </head>
+          <body>
+            <pre>${this.escapeHtml(item.content)}</pre>
+            <script>
+              window.onload = function() {
+                setTimeout(() => window.print(), 500);
+              };
+            </script>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+    }
   }
 
   openURL(url: string): void {
     window.open(url, "_blank", "noopener,noreferrer");
-  }
-
-  private openPrintWindow(content: string): void {
-    const printWindow = window.open("", "_blank", "width=800,height=600");
-    if (printWindow) {
-      printWindow.document.write(content);
-      printWindow.document.close();
-    }
   }
 
   private escapeHtml(text: string): string {
